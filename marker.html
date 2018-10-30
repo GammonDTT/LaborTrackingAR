@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+	<head>
+		<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+		<style>
+			body,
+			html {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				width: 100%;
+			}
+
+			body {
+				align-items: center;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+			}
+
+			img {
+				margin: 10px;
+			}
+
+			.hidden {
+				visibility: hidden;
+			}
+
+			#no {
+				font-family: 'Roboto', sans-serif;
+				font-size: 33px;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<img src="images/0.png" value="0">
+		<div id="no">0</div>
+	</body>
+	<script>
+		const img=document.querySelector('img');
+		const no=document.querySelector('#no');
+
+		img.onclick=evt=>{
+			let value=(parseInt(img.getAttribute('value'))+1)%10;
+
+			img.setAttribute('value', value);
+			img.src=`images/${value}.png`;
+			no.innerHTML=value;
+		}
+	</script>
+</html>
