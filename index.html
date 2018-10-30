@@ -35,71 +35,75 @@
 		</style>
 	</head>
 	<script>
-		const NUM_MARKERS=3;
 		const markers=[];
-		const ref=[{
-			id: 0,
-			pos: {
-				world: new THREE.Vector3(0, 0, 0)
+
+		function Marker(elem){
+			this.elem=elem;
+			this.name=elem.querySelector('a-text').getAttribute('value');
+			this.visible=false;
+			this.lastScreenPos=null;
+			this.records={
+				in: 0,
+				out: 0
+			};
+
+			this.setVisible=visible=>{
+				if(this.visible!==visible){
+					this.visible=visible;
+					if(this.visible){
+						// Visible
+					}else{
+						// Not visible
+					}
+				}
 			}
-		}, {
-			id: NUM_MARKERS-1,
-			pos: {
-				world: new THREE.Vector3(14, -14, 0)
-			}
-		}];
-		let numVisible=-1;
+		}
+
+		function getScreenPos(marker){
+			const vector=marker.elem.object3D.position.clone();
+
+			vector.project(scene.camera);
+			return {
+				x: vector.x,
+				y: vector.y
+			};
+		};
 
 		AFRAME.registerComponent('markerhandler', {
 			init: _=>{
 				this.tick=AFRAME.utils.throttleTick(this.tick, 500, this);
 			},
 			tick: (t, dt)=>{
-				// Count visible markers
-				let newNumVisible=0;
-
 				for(let marker of markers){
-					if(marker.object3D.visible){
-						newNumVisible++;
+					marker.setVisible(marker.elem.object3D.visible);
+					if(marker.visible){
+						marker.lastScreenPos=getScreenPos(marker);
+					}else if(marker.lastScreenPos!==null){
+						if(marker.lastScreenPos.x<0){ // Last seen on the left side of the camera
+							marker.records.out++;
+						}else{ // Last seen on the right side of the camera
+							marker.records.in++;
+						}
+						marker.lastScreenPos=null;
 					}
 				}
-				if(newNumVisible!==numVisible){
-					numVisible=newNumVisible;
-					counter.innerHTML=`${numVisible} marker${numVisible!==1?'s':''} visible`;
-				}
-
-				// Calculate marker position
-				for(let i in ref){
-					ref[i].pos.local=new THREE.Vector3(markers[ref[i].id].object3D.position.x, markers[ref[i].id].object3D.position.y, markers[ref[i].id].object3D.position.z);
-				}
-
-				const p={
-					local: new THREE.Vector3(markers[1].object3D.position.x, markers[1].object3D.position.y, markers[1].object3D.position.z)
-				};
-				const ratio=p.local.sub(ref[0].pos.local).divide(ref[1].pos.local.sub(ref[0].pos.local));
-				
-				p.world=ref[1].pos.world.sub(ref[0].pos.world);
-				debug.innerHTML=`X=${p.world.x*ratio.x}<br>
-				Y=${p.world.y*ratio.y}<br>
-				Z=${p.world.z*ratio.z}`;
+				debug.innerHTML=markers.map(marker=>{
+					return `${marker.name}: ${marker.records.in} in${marker.records.in!==1?'s':''}, ${marker.records.out} out${marker.records.out!==1?'s':''}`;
+				}).join('<br>');
 			}
 		});
 	</script>
 	<body>
 		<a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
 			<a-marker markerhandler type='barcode' id='m0' value='0'>
-				<a-text rotation='-90 0 0' side='double' value='1' color='green' align='center' geometry='primitive:plane' material='color:blue;wireframe:true'></a-text>
+				<a-text rotation='-90 0 0' side='double' value='ALICE' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
 			</a-marker>
 			<a-marker markerhandler type='barcode' id='m1' value='1'>
-				<a-text rotation='-90 0 0' side='double' value='2' color='red' align='center' geometry='primitive:plane' material='color:blue;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m2' value='2'>
-				<a-text rotation='-90 0 0' side='double' value='3' color='green' align='center' geometry='primitive:plane' material='color:blue;wireframe:true'></a-text>
+				<a-text rotation='-90 0 0' side='double' value='BOB' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
 			</a-marker>
 			<a-entity camera></a-entity>
 		</a-scene>
 		<div id="overlay">
-			<div id="counter"></div>
 			<div id="debug"></div>
 		</div>
 	</body>
@@ -108,13 +112,8 @@
 		const counter=document.getElementById('counter');
 		const debug=document.getElementById('debug');
 
-		for(let i=0; i<NUM_MARKERS; i++){
-			markers.push(document.getElementById(`m${i}`));
-		}
-		for(let i in ref){
-			const markerText=document.querySelector(`#m${ref[i].id} a-text`);
-
-			markerText.setAttribute('value', `${markerText.getAttribute('value')}\n(${ref[i].pos.world.x}, ${ref[i].pos.world.y}, ${ref[i].pos.world.z})`);
+		for(let marker of document.querySelectorAll('a-marker')){
+			markers.push(new Marker(marker));
 		}
 	</script>
 </html>
