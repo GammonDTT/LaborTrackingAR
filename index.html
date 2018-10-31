@@ -14,7 +14,7 @@
 				padding: 0;
 			}
 
-			#counter,
+			#direction,
 			#debug {
 				background: rgba(0,0,0,0.7);
 				color: #fff;
@@ -35,7 +35,10 @@
 		</style>
 	</head>
 	<script>
+		const NUM_MARKERS=10;
 		const markers=[];
+
+		let pass='';
 
 		function Marker(elem){
 			this.elem=elem;
@@ -69,6 +72,16 @@
 			};
 		};
 
+		pass=prompt('Please enter the password:');
+		fetch(`https://script.google.com/macros/s/AKfycbxLAjo14BEZjM1I5Yw4OCRqLIFjQsm7248QcNN7u8ULKvuL2ljm/exec?func=checkPass&pass=${pass}`).then(res=>{
+			return res.json();
+		}).then(data=>{
+			if(!data.success){
+				pass='';
+				alert('Sorry but the password is incorrect. Records will not be saved.');
+			}
+		});
+
 		AFRAME.registerComponent('markerhandler', {
 			init: _=>{
 				this.tick=AFRAME.utils.throttleTick(this.tick, 500, this);
@@ -81,8 +94,10 @@
 					}else if(marker.lastScreenPos!==null){
 						if(marker.lastScreenPos.x<0){ // Last seen on the left side of the camera
 							marker.records.out++;
+							fetch(`https://script.google.com/macros/s/AKfycbxLAjo14BEZjM1I5Yw4OCRqLIFjQsm7248QcNN7u8ULKvuL2ljm/exec?func=addRecord&id=${marker.name}&time=${new Date().getTime()}&in_out=0&pass=${pass}`);
 						}else{ // Last seen on the right side of the camera
 							marker.records.in++;
+							fetch(`https://script.google.com/macros/s/AKfycbxLAjo14BEZjM1I5Yw4OCRqLIFjQsm7248QcNN7u8ULKvuL2ljm/exec?func=addRecord&id=${marker.name}&time=${new Date().getTime()}&in_out=1&pass=${pass}`);
 						}
 						marker.lastScreenPos=null;
 					}
@@ -96,46 +111,31 @@
 	<body>
 		<a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
 			<a-marker markerhandler type='barcode' id='m0' value='0'>
-				<a-text rotation='-90 0 0' side='double' value='ALFA' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m1' value='1'>
-				<a-text rotation='-90 0 0' side='double' value='BRAVO' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m2' value='2'>
-				<a-text rotation='-90 0 0' side='double' value='CHARLIE' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m3' value='3'>
-				<a-text rotation='-90 0 0' side='double' value='DELTA' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m4' value='4'>
-				<a-text rotation='-90 0 0' side='double' value='ECHO' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m5' value='5'>
-				<a-text rotation='-90 0 0' side='double' value='FOXTROT' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m6' value='6'>
-				<a-text rotation='-90 0 0' side='double' value='GOLF' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m7' value='7'>
-				<a-text rotation='-90 0 0' side='double' value='HOTEL' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m8' value='8'>
-				<a-text rotation='-90 0 0' side='double' value='INDIA' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
-			</a-marker>
-			<a-marker markerhandler type='barcode' id='m9' value='9'>
-				<a-text rotation='-90 0 0' side='double' value='JULIETT' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
+				<a-text rotation='-90 0 0' side='double' value='0' color='red' align='center' geometry='primitive:plane' material='color:red;wireframe:true'></a-text>
 			</a-marker>
 			<a-entity camera></a-entity>
 		</a-scene>
 		<div id="overlay">
-			<div id="debug"></div>
+			<div id="direction">OUT -> IN</div>
+			<div id="debug"/div>
 		</div>
 	</body>
 	<script>
 		const scene=document.querySelector('a-scene');
+		const genesis=document.querySelector('a-marker');
+		const camera=document.querySelector('a-entity');
 		const counter=document.getElementById('counter');
+		const direction=document.getElementById('direction');
 		const debug=document.getElementById('debug');
 
+		for(let i=1; i<NUM_MARKERS; i++){
+			const newMarker=genesis.cloneNode(true);
+
+			newMarker.setAttribute('id', `m${i}`);
+			newMarker.setAttribute('value', i);
+			newMarker.firstElementChild.setAttribute('value', i);
+			scene.insertBefore(newMarker, camera);
+		}
 		for(let marker of document.querySelectorAll('a-marker')){
 			markers.push(new Marker(marker));
 		}
