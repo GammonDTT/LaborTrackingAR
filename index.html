@@ -168,7 +168,7 @@
 								marker.records.out++;
 							}
 							if(pass)
-								fetch(`https://script.google.com/macros/s/AKfycbxLAjo14BEZjM1I5Yw4OCRqLIFjQsm7248QcNN7u8ULKvuL2ljm/exec?func=addRecord&id=${marker.name}&time=${new Date().getTime()}&in_out=0&pass=${pass}`);
+								fetch(`https://script.google.com/macros/s/AKfycbxLAjo14BEZjM1I5Yw4OCRqLIFjQsm7248QcNN7u8ULKvuL2ljm/exec?func=addRecord&id=${marker.name}&time=${new Date().getTime()}&in_out=${inOut?1:0}&pass=${pass}`);
 							marker.dirty=false;
 						}
 					}
@@ -180,7 +180,7 @@
 		});
 	</script>
 	<body>
-		<a-scene embedded arjs='debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceType: webcam; sourceUrl: postProcess; maxDetectionRate: 30'>
+		<a-scene embedded arjs='debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceType: webcam; sourceUrl: postProcess'>
 			<a-marker markerhandler type='barcode' id='m0' value='0'>
 				<a-text rotation='-90 0 0' side='double' value='0' color='green' align='center' geometry='primitive:plane' material='color:green;wireframe:true'></a-text>
 			</a-marker>
